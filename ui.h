@@ -20,6 +20,9 @@ void ui_intro(){
     LG_FONT_DATA = read_font("font.txt");
 }
 
+void ui_showvideo(){
+}
+
 #define UI_NONE -1
 #define UI_EXIT 0
 #define UI_SIGNAL_PLAYER 1
@@ -41,7 +44,6 @@ int ui_select(int *lastselect){
         {"",UI_NONE},
         {"離開遊戲",UI_EXIT},
     };
-    
     int select = 0;
     if( lastselect!= NULL )
         select = *lastselect;
@@ -88,4 +90,38 @@ int ui_select(int *lastselect){
     return botton[select].id;
 }
 
+void getInputFileName(char *buf,size_t sz){
+    //TODO remore VBS.
+    remove("file.txt");
+    system("echo X = InputBox(\"檔案名稱\",\"InputFile\") > openfile.vbs");
+    system("echo Set fs = CreateObject(\"Scripting.FileSystemObject\") >>openfile.vbs");
+    system("echo Set a = fs.CreateTextFile(\"file.txt\",True,False) >>openfile.vbs");
+    system("echo a.WriteLine(\"map\\\"+X) >>openfile.vbs");
+    system("echo a.Close >>openfile.vbs");
+    
+    system("openfile.vbs");
+    while(_access("file.txt",F_OK)!=0){
+        Sleep(100);
+    }
+    Sleep(50);
+    
+    FILE * f = fopen("file.txt","r");
+    fgets(buf,sz,f);
+    _STR(buf);
+    fclose(f);
+    remove("openfile.vbs");
+}
+
+bool ui_select_map(pMapfile pmpf){
+    char buf[80];
+    getInputFileName(buf,80);
+    
+    if( !read_map(pmpf,buf) )
+    {
+        MSGBOX("無法開啟檔案");
+        LOG("Open File:%s Error!",buf);
+        return false;
+    }
+    return false;
+}
 #endif

@@ -6,7 +6,7 @@ CC       = gcc.exe
 WINDRES  = windres.exe
 OBJ      = main.o library/audio.o library/console_draw3.o library/font.o library/image.o library/kb_input2.o
 LINKOBJ  = main.o library/audio.o library/console_draw3.o library/font.o library/image.o library/kb_input2.o
-LIBS     = -L"C:/TDM-GCC-64/bin/lib" -static-libgcc  -Wall -Wextra -O2  -DDBG -std=c++14 -std=c11 -lwinmm
+LIBS     = -L"C:/TDM-GCC-64/bin/lib" -static-libgcc  -Wall -Wextra -O2  -DDBG -std=c++14 -std=c11 -lwinmm -lWininet -lVfw32
 INCS     = 
 CXXINCS  = -I"C:/TDM-GCC-64/include" -I"C:/TDM-GCC-64/x86_64-w64-mingw32/include" -I"C:/TDM-GCC-64/lib/gcc/x86_64-w64-mingw32/5.1.0/include" -I"C:/TDM-GCC-64/lib/gcc/x86_64-w64-mingw32/5.1.0/include/c++"
 BIN      = Portal.exe

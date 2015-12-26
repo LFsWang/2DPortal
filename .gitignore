@@ -2,7 +2,8 @@
 *.o
 *.layout
 Makefile.win
-
+file.txt
+*.vbs
 #################
 ## Eclipse
 #################
