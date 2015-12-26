@@ -22,4 +22,6 @@ putASCII2()  最後兩個參數分別是字元前景和背景的顏色
 */
 
 #define ARRAY_NUM(X) (sizeof(X)/sizeof(X[0]))
+#define MIN(x,y) ((x)<(y)?(x):(y))
+#define MAX(x,y) ((x)>(y)?(x):(y))
 #endif

@@ -21,6 +21,16 @@ void ui_intro(){
 }
 
 void ui_showvideo(){
+    Sleep(1000);
+    HWND hWnd = FindWindow(NULL,GAME_NAME);
+    HWND hAVI = MCIWndCreate(hWnd,NULL,WS_CHILD|WS_VISIBLE|MCIWNDF_NOMENU|MCIWNDF_NOPLAYBAR,NULL);
+	SetWindowPos(hAVI,HWND_TOP,155,50,0,0,SWP_SHOWWINDOW);
+	MCIWndOpen(hAVI,".\\logo.wmv",NULL);
+	MCIWndPlay(hAVI);
+	Sleep(6000);
+	MCIWndStop(hAVI);
+	MCIWndClose(hAVI);
+	MCIWndDestroy(hAVI);
 }
 
 #define UI_NONE -1
@@ -51,6 +61,7 @@ int ui_select(int *lastselect){
     const int button_num = ARRAY_NUM(botton);
     
     while(!entered){
+        clearScreen();
         int LOGO_X = ( WIN_W - sizeof(GAME_NAME)*LG_WORD_W ) / 2;
         putStringLarge(LG_FONT_DATA,LOGO_X,5,GAME_NAME,COLOR_LIGHTYELLOW);
         
@@ -123,5 +134,28 @@ bool ui_select_map(pMapfile pmpf){
         return false;
     }
     return false;
+}
+
+bool draw_map(pMapfile mf,int X,int Y)
+{
+    
+    LOG("DrowMapFile");
+    typedef Image * pImage;
+    //tmp
+    pImage img[2];
+    img[0]= read_image("img\\0.pixel","img\\0.color");
+    img[1]= read_image("img\\1.pixel","img\\1.color");
+    LOG("LoadImg");
+    int WBlock = WIN_W / 3;
+    int HBlock = WIN_H / 3 - 2;
+    int i,j,n,m;
+    pBlock tblock = mf->block;
+    clearScreen();
+    LOG("%d %d",HBlock,mf->H);
+    LOG("%d %d",WBlock,mf->W);
+    for(i=Y,n=0;i<MIN(HBlock,mf->H);++i,++n)
+        for(j=X,m=0;j<MIN(WBlock,mf->W);++j,++m)
+            show_image(img[ tblock[i*mf->H+j].imgid ],n*6,m*3);
+    drawCmdWindow();
 }
 #endif
