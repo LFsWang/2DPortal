@@ -16,10 +16,12 @@
 #include"log.h"
 #include"map.h"
 #include"ui.h"
+#include"img.h"
 
-
-
-int main()
+int main(){
+	img_intro();
+}
+/*int main()
 {
     //
     int ui_select_mod;
@@ -53,4 +55,4 @@ int main()
     }
     
 	return 0;
-}
+}*/
