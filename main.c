@@ -28,7 +28,7 @@ int main()
     //intro
     log_intro();
     ui_intro();
-    
+    img_intro();
     //ui_showvideo();
     for(;;){
         ui_select_mod = ui_select(&lastselect);
@@ -38,9 +38,9 @@ int main()
         
         switch(ui_select_mod){
             case UI_MAP_EDITOR:
-                ui_select_map(&mf);
-                draw_map(&mf,0,0);
-                Sleep(5000);
+                if(ui_select_map(&mf)) 
+                    ui_mapeditor(&mf);
+                
                 break;
             default:
                 LOG("Unknow Ui Mode:%d",ui_select_mod);

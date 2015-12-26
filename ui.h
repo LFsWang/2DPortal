@@ -8,7 +8,7 @@
 #include"library\kb_input2.h"
 
 #include"define.h"
-
+#include"img.h"
 
 pFont LG_FONT_DATA;
 #define WIN_W 120
@@ -100,11 +100,11 @@ int ui_select(int *lastselect){
         *lastselect = select;
     return botton[select].id;
 }
-
-void getInputFileName(char *buf,size_t sz){
-    //TODO remore VBS.
+void GetInputVBS(const char* title,char *buf,size_t sz){
+    char tmp[256];
+    sprintf(tmp,"echo X = InputBox(\"%s\",\"InputFile\") > openfile.vbs",title);
     remove("file.txt");
-    system("echo X = InputBox(\"檔案名稱\",\"InputFile\") > openfile.vbs");
+    system(tmp);
     system("echo Set fs = CreateObject(\"Scripting.FileSystemObject\") >>openfile.vbs");
     system("echo Set a = fs.CreateTextFile(\"file.txt\",True,False) >>openfile.vbs");
     system("echo a.WriteLine(\"map\\\"+X) >>openfile.vbs");
@@ -125,27 +125,19 @@ void getInputFileName(char *buf,size_t sz){
 
 bool ui_select_map(pMapfile pmpf){
     char buf[80];
-    getInputFileName(buf,80);
-    
+    GetInputVBS("檔案名稱",buf,80);
     if( !read_map(pmpf,buf) )
     {
         MSGBOX("無法開啟檔案");
         LOG("Open File:%s Error!",buf);
         return false;
     }
-    return false;
+    return true;
 }
 
 bool draw_map(pMapfile mf,int X,int Y)
 {
-    
     LOG("DrowMapFile");
-    typedef Image * pImage;
-    //tmp
-    pImage img[2];
-    img[0]= read_image("img\\0.pixel","img\\0.color");
-    img[1]= read_image("img\\1.pixel","img\\1.color");
-    LOG("LoadImg");
     int WBlock = WIN_W / 3;
     int HBlock = WIN_H / 3 - 2;
     int i,j,n,m;
@@ -155,7 +147,50 @@ bool draw_map(pMapfile mf,int X,int Y)
     LOG("%d %d",WBlock,mf->W);
     for(i=Y,n=0;i<MIN(HBlock,mf->H);++i,++n)
         for(j=X,m=0;j<MIN(WBlock,mf->W);++j,++m)
-            show_image(img[ tblock[i*mf->H+j].imgid ],n*6,m*3);
-    drawCmdWindow();
+            putImageById(m,n,tblock[i*mf->W+j].imgid);
 }
+
+bool ui_mapeditor(pMapfile mf)
+{
+    LOG("Modify Map");
+    int posX = 0,posY = 0;
+    bool exit = false;
+    char buf[256];
+    int ta,tb;
+    
+    while( !exit ){
+        draw_map(mf,0,0);
+        //nowpos
+        putASCII2(posX*6,posY*3,'@',12,12);
+        putASCII2(posX*6+1,posY*3,'@',12,12);
+        
+        sprintf(buf,"now pos %2d:%2d [%2d:%2d]",posY,posX,mf->H,mf->W);
+        putString(0,34,buf,0,15);
+        drawCmdWindow();
+        
+        while(!waitForKeyDown(5));
+        int vcode = getKeyEventVirtual();
+        switch(vcode){
+            case VK_UP:     posY = MAX(0,posY-1);break;
+            case VK_DOWN:   posY = MIN(mf->H-1,posY+1);break;
+            case VK_LEFT:   posX = MAX(0,posX-1);break;
+            case VK_RIGHT:  posX = MIN(mf->W-1,posX+1);break;
+            case VK_ESCAPE: exit = true; break;
+            case VK_R: 
+                GetInputVBS("重新設定地圖尺寸 H W",buf,256);
+                sscanf(buf,"%d %d",&ta,&tb);
+                if( 0<ta&&ta<500 && 0<tb&&tb<500 ){
+                    LOG("Resize to %d %d",ta,tb);
+                    resize_map(mf,ta,tb);
+                }
+                else{
+                    MSGBOX("尺寸需小於500x500"); 
+                }
+                
+                break;
+        }
+    }
+    //exit
+}
+
 #endif

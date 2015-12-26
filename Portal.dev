@@ -11,7 +11,7 @@ ResourceIncludes=
 MakeIncludes=
 Compiler=
 CppCompiler=
-Linker=-lwinmm_@@_
+Linker=-lwinmm_@@_-lWininet_@@_-lVfw32_@@_
 IsCpp=0
 Icon=
 ExeOutput=
@@ -19,7 +19,7 @@ ObjectOutput=
 LogOutput=
 LogOutputEnabled=0
 OverrideOutput=0
-OverrideOutputName=Protal.exe
+OverrideOutputName=Portal.exe
 HostApplication=
 UseCustomMakefile=0
 CustomMakefile=
@@ -27,9 +27,9 @@ CommandLine=
 Folders=
 IncludeVersionInfo=0
 SupportXPThemes=0
-CompilerSet=0
+CompilerSet=6
 CompilerSettings=0000000000000000000000000
-UnitCount=15
+UnitCount=16
 
 [VersionInfo]
 Major=1
@@ -191,6 +191,16 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit15]
+FileName=map.h
+CompileCpp=0
+Folder=
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit16]
 FileName=img.h
 CompileCpp=0
 Folder=

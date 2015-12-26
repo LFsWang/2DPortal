@@ -48,6 +48,22 @@ char *_STR(char * str){
     }
     return str;
 }
+bool resize_map(pMapfile mf,int nH,int nW)
+{
+    pBlock newmap = (pBlock)malloc(sizeof(Block)*nW*nH);
+    pBlock oldmap = mf->block;
+    memset(newmap,0,sizeof(Block)*nW*nH);
+    
+    if(!newmap) return false;
+    
+    int i,j;
+    for( i=0;i < min(nH,mf->H) ;++i)
+        for( j=0;j < min(nW,mf->W) ;++j)
+            newmap[i*nW+j]=oldmap[i*mf->W+j];
+    mf->block=newmap;
+    free(oldmap);
+    return true;
+}
 bool read_map(pMapfile ptr,const char *filename){
     int i,j;
     LOG("[File]Open %s",filename);
