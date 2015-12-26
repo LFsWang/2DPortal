@@ -18,10 +18,8 @@
 #include"ui.h"
 #include"img.h"
 
-int main(){
-	img_intro();
-}
-/*int main()
+
+int main()
 {
     //
     int ui_select_mod;
@@ -55,4 +53,4 @@ int main(){
     }
     
 	return 0;
-}*/
+}
