@@ -29,7 +29,7 @@ int main()
     log_intro();
     ui_intro();
     img_intro();
-    //ui_showvideo();
+    ui_showvideo();
     for(;;){
         ui_select_mod = ui_select(&lastselect);
         if( ui_select_mod == UI_EXIT ){

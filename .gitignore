@@ -4,6 +4,8 @@
 Makefile.win
 file.txt
 *.vbs
+*.dev
+release/*
 #################
 ## Eclipse
 #################

@@ -16,8 +16,11 @@ pFont LG_FONT_DATA;
 void ui_intro(){
     system("mode 120,39");
     SetConsoleTitle(GAME_NAME);
-    initializeKeyInput();
+    
     LG_FONT_DATA = read_font("font.txt");
+    SetWindowPos(FindWindow(NULL,GAME_NAME),HWND_TOP,10,10,0,0,SWP_NOSIZE);
+    LOG("%d",GetLastError());
+    initializeKeyInput();
 }
 
 void ui_showvideo(){
@@ -27,7 +30,7 @@ void ui_showvideo(){
 	SetWindowPos(hAVI,HWND_TOP,155,50,0,0,SWP_SHOWWINDOW);
 	MCIWndOpen(hAVI,".\\logo.wmv",NULL);
 	MCIWndPlay(hAVI);
-	Sleep(6000);
+	Sleep(13500);
 	MCIWndStop(hAVI);
 	MCIWndClose(hAVI);
 	MCIWndDestroy(hAVI);
@@ -138,21 +141,25 @@ bool ui_select_map(pMapfile pmpf){
     return true;
 }
 
-bool draw_map(pMapfile mf,int X,int Y)
+void draw_map(pMapfile mf,int X,int Y)
 {
-    LOG("DrowMapFile");
     int WBlock = WIN_W / 3;
     int HBlock = WIN_H / 3 - 2;
     int i,j,n,m;
     pBlock tblock = mf->block;
     clearScreen();
-    LOG("%d %d",HBlock,mf->H);
-    LOG("%d %d",WBlock,mf->W);
-    for(i=Y,n=0;i<MIN(HBlock,mf->H);++i,++n)
-        for(j=X,m=0;j<MIN(WBlock,mf->W);++j,++m)
+    for(i=Y,n=0;i<mf->H && n<HBlock;++i,++n)
+        for(j=X,m=0;j<mf->W&&m<WBlock;++j,++m)
             putImageById(m,n,tblock[i*mf->W+j].imgid);
 }
-
+void draw_map_md(pMapfile mf,int X,int Y,int *px,int *py){
+    //set mid = (10,5)
+    int nX = max(0,X-10);
+    int nY = max(0,Y-5);
+    draw_map(mf,nX,nY);
+    if(px!=NULL)    *px = X-nX;
+    if(py!=NULL)    *py = Y-nY;
+}
 bool ui_mapeditor(pMapfile mf)
 {
     LOG("Modify Map");
@@ -163,7 +170,9 @@ bool ui_mapeditor(pMapfile mf)
     int drawerid = 0;
     
     while( !exit ){
-        draw_map(mf,0,0);
+        //draw_map
+        //draw_map(mf,0,0);
+        draw_map_md(mf,posX,posY,&ta,&tb);
         //drawer
         show_image(getImageById(drawerid),0,34);
         putString(9,34,"筆刷",15,0);
@@ -172,13 +181,23 @@ bool ui_mapeditor(pMapfile mf)
         
         putString(0,37,"O:更換筆刷",15,0);
         //nowpos
-        putASCII2(posX*6,posY*3,'@',12,12);
-        putASCII2(posX*6+1,posY*3,'@',12,12);
-        
+        putASCII2(ta*6,tb*3,'@',12,12);
+        putASCII2(ta*6+1,tb*3,'@',12,12);        
         sprintf(buf,"now pos %2d:%2d [%2d:%2d]",posY,posX,mf->H,mf->W);
         putString(20,34,buf,0,15);
+        
+        //this point info
+        pBlock nPos= &(mf->block[posX+posY*mf->W]);
+        show_image(getImageById(nPos->imgid),50,34);
+        sprintf(buf,"IMG :%d",nPos->imgid);
+        putString(58,34,buf,0,15);
+        sprintf(buf,"屬性:%d",nPos->type);
+        putString(58,35,buf,0,15);
+        sprintf(buf,"事件:%d",nPos->eventid);
+        putString(58,36,buf,0,15);
         drawCmdWindow();
         
+       
         while(!waitForKeyDown(5));
         int vcode = getKeyEventVirtual();
         switch(vcode){
@@ -217,7 +236,7 @@ bool ui_mapeditor(pMapfile mf)
                 GetInputVBS("重新設定地圖尺寸 H W",buf,256);
                 sscanf(buf,"%d %d",&ta,&tb);
                 MSGBOX(buf);
-                if( 0<ta&&ta<500 && 0<tb&&tb<500 ){
+                if( 0<ta&&ta<=500 && 0<tb&&tb<=500 ){
                     LOG("Resize to %d %d",ta,tb);
                     resize_map(mf,ta,tb);
                     posY = min(posY,ta);
