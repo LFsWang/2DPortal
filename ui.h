@@ -107,7 +107,7 @@ void GetInputVBS(const char* title,char *buf,size_t sz){
     system(tmp);
     system("echo Set fs = CreateObject(\"Scripting.FileSystemObject\") >>openfile.vbs");
     system("echo Set a = fs.CreateTextFile(\"file.txt\",True,False) >>openfile.vbs");
-    system("echo a.WriteLine(\"map\\\"+X) >>openfile.vbs");
+    system("echo a.WriteLine(X) >>openfile.vbs");
     system("echo a.Close >>openfile.vbs");
     
     system("openfile.vbs");
@@ -122,16 +122,19 @@ void GetInputVBS(const char* title,char *buf,size_t sz){
     fclose(f);
     remove("openfile.vbs");
 }
-
+char LAST_FILE_NAME[256];
 bool ui_select_map(pMapfile pmpf){
-    char buf[80];
-    GetInputVBS("檔案名稱",buf,80);
+    char tmp[80],buf[80]="map\\";
+    GetInputVBS("檔案名稱",tmp,80);
+    strcat(buf,tmp);
+    
     if( !read_map(pmpf,buf) )
     {
         MSGBOX("無法開啟檔案");
         LOG("Open File:%s Error!",buf);
         return false;
     }
+    strcpy(LAST_FILE_NAME,buf);
     return true;
 }
 
@@ -157,15 +160,23 @@ bool ui_mapeditor(pMapfile mf)
     bool exit = false;
     char buf[256];
     int ta,tb;
+    int drawerid = 0;
     
     while( !exit ){
         draw_map(mf,0,0);
+        //drawer
+        show_image(getImageById(drawerid),0,34);
+        putString(9,34,"筆刷",15,0);
+        sprintf(buf,"%d.img",drawerid);
+        putString(9,35,buf,15,0);
+        
+        putString(0,37,"O:更換筆刷",15,0);
         //nowpos
         putASCII2(posX*6,posY*3,'@',12,12);
         putASCII2(posX*6+1,posY*3,'@',12,12);
         
         sprintf(buf,"now pos %2d:%2d [%2d:%2d]",posY,posX,mf->H,mf->W);
-        putString(0,34,buf,0,15);
+        putString(20,34,buf,0,15);
         drawCmdWindow();
         
         while(!waitForKeyDown(5));
@@ -175,13 +186,42 @@ bool ui_mapeditor(pMapfile mf)
             case VK_DOWN:   posY = MIN(mf->H-1,posY+1);break;
             case VK_LEFT:   posX = MAX(0,posX-1);break;
             case VK_RIGHT:  posX = MIN(mf->W-1,posX+1);break;
-            case VK_ESCAPE: exit = true; break;
+            case VK_ESCAPE: 
+                ta = MSGBOXNY("是否離開? 將會遺失未儲存的資料");
+                if( ta == IDYES )
+                    exit = true; 
+                break;
+            //Drawer
+            case VK_O:
+                GetInputVBS("筆刷ID",buf,256);
+                sscanf(buf,"%d",&ta);
+                if( getImageById(ta) == NULL ){
+                    MSGBOX("無此筆刷");
+                }
+                else {
+                    drawerid = ta;
+                    LOG("更換筆刷為%d.img",ta); 
+                }
+                break;
+            case VK_SPACE:
+                mf->block[posX+posY*mf->W].imgid=drawerid;
+                break;
+            case VK_S:
+                if( save_map(mf,LAST_FILE_NAME) ){
+                    MSGBOX("存檔成功\"); 
+                } else {
+                    MSGBOX("存檔失敗");
+                }
+                break;
             case VK_R: 
                 GetInputVBS("重新設定地圖尺寸 H W",buf,256);
                 sscanf(buf,"%d %d",&ta,&tb);
+                MSGBOX(buf);
                 if( 0<ta&&ta<500 && 0<tb&&tb<500 ){
                     LOG("Resize to %d %d",ta,tb);
                     resize_map(mf,ta,tb);
+                    posY = min(posY,ta);
+                    posX = min(posX,tb);
                 }
                 else{
                     MSGBOX("尺寸需小於500x500"); 

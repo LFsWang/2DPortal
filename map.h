@@ -62,6 +62,8 @@ bool resize_map(pMapfile mf,int nH,int nW)
             newmap[i*nW+j]=oldmap[i*mf->W+j];
     mf->block=newmap;
     free(oldmap);
+    mf->W=nW;
+    mf->H=nH;
     return true;
 }
 bool read_map(pMapfile ptr,const char *filename){
@@ -108,6 +110,28 @@ bool read_map(pMapfile ptr,const char *filename){
             tblock++;
         }
     }
+    fclose(fp);
+    return true;
+}
+
+bool save_map(pMapfile ptr,const char *filename){
+    int i,j;
+    LOG("[File]Save %s",filename);
+    FILE *fp = fopen(filename,"w");
+    fprintf(fp,MAPFILEVER "\n");
+    //todo
+    fprintf(fp,"0\n");
+    
+    pBlock tblock = ptr->block;
+    fprintf(fp,"%d %d\n",ptr->H,ptr->W);
+    for(i=0;i<ptr->H;++i){
+        for(j=0;j<ptr->W;++j){
+            fprintf(fp,"%d %d %d ",tblock->imgid,tblock->type,tblock->eventid);
+            tblock++;
+        }
+        fprintf(fp,"\n");
+    }
+    fclose(fp);
     return true;
 }
 #endif

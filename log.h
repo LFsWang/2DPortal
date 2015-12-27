@@ -13,7 +13,8 @@
     }while(false)
 
 //Why GetStdHandle return ERROR 1400 ?
-#define MSGBOX(X) MessageBox(FindWindow(NULL,GAME_NAME),X,NULL,MB_OK)
+#define MSGBOX(X) MessageBox(FindWindow(NULL,GAME_NAME),X,"Warning",MB_OK)
+#define MSGBOXNY(X) MessageBox(FindWindow(NULL,GAME_NAME),X,"Information",MB_YESNO)
 char LOG_TIME_BUF[LOG_BUF_SIZE];
 const char* log_time(){
     time_t rawtime;
