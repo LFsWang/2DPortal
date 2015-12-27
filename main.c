@@ -29,7 +29,7 @@ int main()
     log_intro();
     ui_intro();
     img_intro();
-    ui_showvideo();
+    //ui_showvideo();
     for(;;){
         ui_select_mod = ui_select(&lastselect);
         if( ui_select_mod == UI_EXIT ){
@@ -41,6 +41,9 @@ int main()
                 if(ui_select_map(&mf)) 
                     ui_mapeditor(&mf);
                 
+                break;
+            case UI_SIGNAL_PLAYER:
+                ui_mapplay();
                 break;
             default:
                 LOG("Unknow Ui Mode:%d",ui_select_mod);

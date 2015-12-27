@@ -21,10 +21,11 @@
 typedef struct{
     int type;
 }Event,*pEvent;
-
-#define BK_TYPE_EMPTY
-#define BK_TYPE_WELL
-
+//bit map
+// 00000000
+#define BK_TYPE_EMPTY   0
+#define BK_TYPE_WELL    1
+#define BK_TYPE_ENTER   2
 typedef struct{
     int imgid;
     int type;

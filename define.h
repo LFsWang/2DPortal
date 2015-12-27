@@ -1,7 +1,7 @@
 #ifndef DEFINE_H
 #define DEFINE_H
 
-#define GAME_NAME "Portal"
+#define GAME_NAME "Tower of KeLa"
 
 typedef Font * pFont; 
 #define LG_WORD_W 8
