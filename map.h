@@ -18,14 +18,25 @@
 #define BLOCK_W 6
 #define BLOCK_H 3
 
-typedef struct{
+#define ET_TYPE_EMPTY   0
+#define ET_TYPE_LOADMAP 1
+
+typedef struct _Event{
     int type;
+    void *data;
+    struct _Event *next;
 }Event,*pEvent;
+
+typedef bool (*callback)(pEvent,void*);
+callback EV_CB_LOAD[10];
+callback EV_CB_SAVE[10];
+
 //bit map
 // 00000000
 #define BK_TYPE_EMPTY   0
 #define BK_TYPE_WELL    1
 #define BK_TYPE_ENTER   2
+#define BK_TYPE_END     3
 typedef struct{
     int imgid;
     int type;
@@ -35,7 +46,6 @@ typedef struct{
 typedef struct{
     int event_num;
     pEvent event;
-    
     int W,H;
     pBlock block;
 }Mapfile,*pMapfile;
@@ -88,13 +98,23 @@ bool read_map(pMapfile ptr,const char *filename){
     fscanf(fp,"%d",&ptr->event_num);
     LOG("NOT Support event_num now");
     assert( ptr->event_num == 0 );
-    
+    char buf[1024];
     if( ptr->event_num != 0 )
     {
-        pEvent tevent;
+        pEvent tevent,tmp;
         tevent = ptr->event = (pEvent)malloc(sizeof(Event)*ptr->event_num);
         for(i=0;i<ptr->H;++i){
-            //TODO
+            tmp=tevent[i];
+            for(;;){
+                fget(fp,buf,sizeof(buf));
+                int eid;
+                sscanf(buf,"%d",&eid);
+                if( eid == -1 ){
+                    break;
+                }
+                
+                EV_CB_LOAD[eid](
+            }
         }
     }
     else
@@ -121,8 +141,17 @@ bool save_map(pMapfile ptr,const char *filename){
     FILE *fp = fopen(filename,"w");
     fprintf(fp,MAPFILEVER "\n");
     //todo
-    fprintf(fp,"0\n");
-    
+    fprintf(fp,"%d\n",ptr->event_num);
+    for(i=0;i<ptr->event_num;++i)
+    {
+        pEvent pe = ptr->event[i];
+        while( pe != NULL )
+        {
+            EV_CB_SAVE[pe->type](pe,fp);
+            fprintf(fp,"\n");
+        }
+        fprintf(fp,"-1\n");
+    }
     pBlock tblock = ptr->block;
     fprintf(fp,"%d %d\n",ptr->H,ptr->W);
     for(i=0;i<ptr->H;++i){

@@ -59,6 +59,8 @@ void ui_showvideo(){
 #define UI_EXIT 0
 #define UI_SIGNAL_PLAYER 1
 #define UI_MAP_EDITOR 2
+#define UI_TEMP 3
+#define UI_TEMP2 4
 typedef struct {
     char name[80];
     int id;
@@ -66,7 +68,7 @@ typedef struct {
 
 
 int ui_select(int *lastselect){
-    PlayAndRepeatMusic("src\\rock-bgm.mp3");
+    //PlayAndRepeatMusic("src\\bgm.mp3");
     // Counter
     int i;
     
@@ -75,6 +77,8 @@ int ui_select(int *lastselect){
         {"單人遊戲",UI_SIGNAL_PLAYER},
         {"地圖編輯器",UI_MAP_EDITOR},
         {"",UI_NONE},
+        {"MAZE",UI_TEMP},
+        {"MAZE PRO",UI_TEMP2},
         {"離開遊戲",UI_EXIT},
     };
     int select = 0;
@@ -120,7 +124,7 @@ int ui_select(int *lastselect){
     }
     if( lastselect != NULL )
         *lastselect = select;
-    StopMusic();
+    //StopMusic();
     return botton[select].id;
 }
 void GetInputVBS(const char* title,char *buf,size_t sz){
@@ -250,7 +254,7 @@ bool ui_mapeditor(pMapfile mf)
             case VK_P:
                 GetInputVBS("屬性ID (-1設定為空)",buf,256);
                 sscanf(buf,"%d",&ta);
-                if( (ta<0||ta>2) && ta!=DMODE_NONE ){
+                if( (ta<0||ta>3) && ta!=DMODE_NONE ){
                     MSGBOX("無此屬性");
                 }
                 else {
@@ -290,7 +294,8 @@ bool ui_mapeditor(pMapfile mf)
     //exit
 }
 
-bool ui_mapplay(){
+bool ui_mapplay(bool tmp){
+    //PlayAndRepeatMusic("src\\demo.mp3");
     LOG("Play Game");
     int i,j,k;
     bool bad_error = false;
@@ -301,11 +306,19 @@ bool ui_mapplay(){
     //Load Old Data
     Mapfile mf;
     pBlock mfb;
-    if( !ui_select_map(&mf) ){
-    //if( !read_map(&mf,"map\\a.txt") ){
-        LOG("Fail Load Map");
-        MSGBOX("地圖載入失敗!"); 
-        return false;
+    if( tmp ){
+        if( !ui_select_map(&mf) ){
+        //if( !read_map(&mf,"map\\a.txt") ){
+            LOG("Fail Load Map");
+            MSGBOX("地圖載入失敗!"); 
+            return false;
+        }
+    }else {
+        if( !read_map(&mf,"map\\mz.txt") ){
+            LOG("Fail Load Map");
+            MSGBOX("地圖載入失敗!"); 
+            return false;
+        }
     }
     mfb = mf.block;
     
@@ -355,9 +368,13 @@ bool ui_mapplay(){
                 uPosY = tPosY;
             }
         }
+        if( mfb[ tPosY*mf.W+tPosX ].type ==  BK_TYPE_END ){
+            MSGBOX("Reach End But No Event defined, Game End");
+            exit_flag = true;
+        }
         if( exit_flag ) break;
     }
-    
+    //StopMusic();
     if( bad_error ){
         MSGBOX("遊戲發生嚴重錯誤，所有未儲存的資料將會遺失");
         return false;

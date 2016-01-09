@@ -30,6 +30,7 @@ int main()
     ui_intro();
     img_intro();
     //ui_showvideo();
+    //PlayAndRepeatMusic("src\\bgm.mp3");
     for(;;){
         ui_select_mod = ui_select(&lastselect);
         if( ui_select_mod == UI_EXIT ){
@@ -43,7 +44,15 @@ int main()
                 
                 break;
             case UI_SIGNAL_PLAYER:
-                ui_mapplay();
+                ui_mapplay(true);
+                break;
+            case UI_TEMP:
+                system("maze 5 51 > map\\mz.txt");
+                ui_mapplay(false);
+                break;
+            case UI_TEMP2:
+                system("maze 51 51 > map\\mz.txt");
+                ui_mapplay(false);
                 break;
             default:
                 LOG("Unknow Ui Mode:%d",ui_select_mod);
