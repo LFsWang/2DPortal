@@ -27,6 +27,7 @@ int main()
     Mapfile mf;
     //intro
     log_intro();
+    map_intro();
     ui_intro();
     img_intro();
     //ui_showvideo();

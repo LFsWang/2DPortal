@@ -1,6 +1,7 @@
 #ifndef MAP_H
 #define MAP_H
 
+#include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
 
@@ -28,8 +29,44 @@ typedef struct _Event{
 }Event,*pEvent;
 
 typedef bool (*callback)(pEvent,void*);
-callback EV_CB_LOAD[10];
-callback EV_CB_SAVE[10];
+#define FUNC_NUM 10
+callback EV_CB_LOAD[FUNC_NUM];
+callback EV_CB_SAVE[FUNC_NUM];
+callback EV_CB_RUN[FUNC_NUM];
+bool runEvent(pEvent p)
+{
+    MSGBOX("run event!");
+    return false;
+}
+bool ev_cb_load_0_msgbox(pEvent ptr,void *s)
+{
+    MSGBOX((char*)s);
+    char *str = (char*)s;
+    // mft = 0 msg...
+    ptr->next = NULL;
+    ptr->type = 0;
+    if( strlen(str) < 3 )
+    {
+        ptr->data = malloc(sizeof(char));
+        ((char*)ptr->data)[0] = '\0';
+    }
+    else
+    {
+        s+=2;
+        ptr->data = malloc(sizeof(char)*strlen(str)+1);
+        memcpy(ptr->data,str,strlen(str)+1);
+    }
+    MSGBOX(ptr->data);
+    return true;
+}
+
+bool ev_cb_save_0_msgbox(pEvent ptr,void *s)
+{
+    FILE *f = (FILE*)s;
+    fprintf(f,"0 %s",ptr->data);
+    MSGBOX(ptr->data);
+    return true;
+}
 
 //bit map
 // 00000000
@@ -59,6 +96,11 @@ char *_STR(char * str){
     }
     return str;
 }
+void map_intro()
+{
+    EV_CB_LOAD[0] = ev_cb_load_0_msgbox;
+    EV_CB_SAVE[0] = ev_cb_save_0_msgbox;
+}
 bool resize_map(pMapfile mf,int nH,int nW)
 {
     pBlock newmap = (pBlock)malloc(sizeof(Block)*nW*nH);
@@ -87,33 +129,47 @@ bool read_map(pMapfile ptr,const char *filename){
         return false;
     }
     //check header
-    char buf[MAPFILEVERLEN+1];
-    fgets(buf,MAPFILEVERLEN+1,fp);
-    if( strcmp(MAPFILEVER,_STR(buf)) != 0 ){
+    char headerbuf[MAPFILEVERLEN+1];
+    fgets(headerbuf,MAPFILEVERLEN+1,fp);
+    if( strcmp(MAPFILEVER,_STR(headerbuf)) != 0 ){
         LOG("檔案格式錯誤或是過時的格式");
         return false;
     }
     
     //load event
     fscanf(fp,"%d",&ptr->event_num);
-    LOG("NOT Support event_num now");
-    assert( ptr->event_num == 0 );
     char buf[1024];
     if( ptr->event_num != 0 )
     {
+        fscanf(fp,"%*c");
         pEvent tevent,tmp;
-        tevent = ptr->event = (pEvent)malloc(sizeof(Event)*ptr->event_num);
-        for(i=0;i<ptr->H;++i){
-            tmp=tevent[i];
+        tevent = ptr->event = (pEvent)calloc(ptr->event_num,sizeof(Event));
+        for(i=0 ; i< ptr->event_num ; ++i){
+            tmp=tevent+i;
             for(;;){
-                fget(fp,buf,sizeof(buf));
-                int eid;
-                sscanf(buf,"%d",&eid);
+                if( !fgets(buf,sizeof(buf),fp) )
+                {
+                    LOG("event load fail with EOF");
+                    return false;
+                }
+                _STR(buf); 
+                int eid,rd;
+                rd = sscanf(buf,"%d",&eid);
+                LOG("event load %d:%d %s",i,eid,buf);
+                if( rd != 1 ){
+                    return false;
+                }
                 if( eid == -1 ){
                     break;
                 }
-                
-                EV_CB_LOAD[eid](
+                tmp->next = (pEvent)malloc(sizeof(Event));
+                if( 0<=eid && eid<FUNC_NUM && EV_CB_LOAD[eid] != NULL )
+                    EV_CB_LOAD[eid](tmp->next,buf);
+                else{
+                    MSGBOX("Function Hook Missing!");
+                    LOG("Function Hook Missing! EV_CB_LOAD %d",eid);
+                    return false;
+                }
             }
         }
     }
@@ -144,11 +200,12 @@ bool save_map(pMapfile ptr,const char *filename){
     fprintf(fp,"%d\n",ptr->event_num);
     for(i=0;i<ptr->event_num;++i)
     {
-        pEvent pe = ptr->event[i];
+        pEvent pe = ptr->event[i].next;
         while( pe != NULL )
         {
             EV_CB_SAVE[pe->type](pe,fp);
             fprintf(fp,"\n");
+            pe=pe->next;
         }
         fprintf(fp,"-1\n");
     }

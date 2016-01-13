@@ -195,7 +195,7 @@ bool ui_mapeditor(pMapfile mf)
     int ta,tb;
     int drawerid = DMODE_NONE;
     int type = DMODE_NONE;
-    
+    int eventid = DMODE_NONE;
     while( !exit ){
         //draw_map
         //draw_map(mf,0,0);
@@ -262,11 +262,21 @@ bool ui_mapeditor(pMapfile mf)
                     LOG("更換屬性為%d",ta); 
                 }
                 break;
+            case VK_E:
+                GetInputVBS("事件ID (-1設定為空)",buf,256);
+                sscanf(buf,"%d",&ta);
+                if( ta == -1 )
+                {
+                    
+                }
+                break;
             case VK_SPACE:
                 if( drawerid != DMODE_NONE )
                     mf->block[posX+posY*mf->W].imgid=drawerid;
                 if( type != DMODE_NONE )
                     mf->block[posX+posY*mf->W].type=type;
+                if( eventid != DMODE_NONE )
+                    mf->block[posX+posY*mf->W].eventid=eventid;
                 break;
             case VK_S:
                 if( save_map(mf,LAST_FILE_NAME) ){
@@ -339,17 +349,36 @@ bool ui_mapplay(bool tmp){
                 uPosY=i;
             }
     LOG("Enter at %d,%d",uPosX,uPosY);
+    
+    bool changed = true;
     while( !bad_error ){
         clearScreen();
         draw_map_md(&mf,uPosX,uPosY,&lx,&ly);
         show_image(img_player,lx*6,ly*3);
         drawCmdWindow();
+        //do event
+        if( changed )
+        {
+            int eid = mfb[uPosY*mf.W+tPosX].eventid;
+            if( eid != -1 )
+            {
+                pEvent e = mf.event[eid].next;
+                while( e!= NULL )
+                {
+                    runEvent(e);
+                    e = e->next;
+                }               
+            }
+            changed = false;
+        }
+        if( exit_flag ) break;
         
         while(!waitForKeyDown(5));
         int vcode = getKeyEventVirtual();
         
         tPosX=uPosX;
         tPosY=uPosY;
+        changed = true;
         switch(vcode){
             case VK_UP:     tPosY = MAX(0,uPosY-1);break;
             case VK_DOWN:   tPosY = MIN(mf.H-1,uPosY+1);break;
@@ -360,6 +389,9 @@ bool ui_mapplay(bool tmp){
                 if( ta == IDYES )
                     exit_flag = true; 
                 break;
+            default:
+                changed = false;
+                break;
         }
         if( tPosX!=uPosX || tPosY != uPosY ){
             //moved
@@ -369,6 +401,7 @@ bool ui_mapplay(bool tmp){
             }
         }
         if( mfb[ tPosY*mf.W+tPosX ].type ==  BK_TYPE_END ){
+            // may be end screen
             MSGBOX("Reach End But No Event defined, Game End");
             exit_flag = true;
         }
