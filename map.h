@@ -28,46 +28,6 @@ typedef struct _Event{
     struct _Event *next;
 }Event,*pEvent;
 
-typedef bool (*callback)(pEvent,void*);
-#define FUNC_NUM 10
-callback EV_CB_LOAD[FUNC_NUM];
-callback EV_CB_SAVE[FUNC_NUM];
-callback EV_CB_RUN[FUNC_NUM];
-bool runEvent(pEvent p)
-{
-    MSGBOX("run event!");
-    return false;
-}
-bool ev_cb_load_0_msgbox(pEvent ptr,void *s)
-{
-    MSGBOX((char*)s);
-    char *str = (char*)s;
-    // mft = 0 msg...
-    ptr->next = NULL;
-    ptr->type = 0;
-    if( strlen(str) < 3 )
-    {
-        ptr->data = malloc(sizeof(char));
-        ((char*)ptr->data)[0] = '\0';
-    }
-    else
-    {
-        s+=2;
-        ptr->data = malloc(sizeof(char)*strlen(str)+1);
-        memcpy(ptr->data,str,strlen(str)+1);
-    }
-    MSGBOX(ptr->data);
-    return true;
-}
-
-bool ev_cb_save_0_msgbox(pEvent ptr,void *s)
-{
-    FILE *f = (FILE*)s;
-    fprintf(f,"0 %s",ptr->data);
-    MSGBOX(ptr->data);
-    return true;
-}
-
 //bit map
 // 00000000
 #define BK_TYPE_EMPTY   0
@@ -87,6 +47,61 @@ typedef struct{
     pBlock block;
 }Mapfile,*pMapfile;
 
+typedef bool (*callback)(pEvent,void*);
+typedef bool (*runcallback)(pEvent,pMapfile,int,int);
+
+
+#define FUNC_NUM 10
+callback EV_CB_LOAD[FUNC_NUM];
+callback EV_CB_SAVE[FUNC_NUM];
+runcallback EV_CB_RUN[FUNC_NUM];
+
+bool runEvent(pEvent p,pMapfile mf,int ri,int rj)
+{
+    //MSGBOX("run event!");
+    if( EV_CB_RUN[p->type] == NULL )
+    {
+        MSGBOX("NULL HOOK FUNCTION");
+    }
+    else
+    {
+        EV_CB_RUN[p->type](p,mf,ri,rj);
+    }
+    return true;
+}
+bool ev_cb_load_0_msgbox(pEvent ptr,void *s)
+{
+    //MSGBOX((char*)s);
+    char *str = (char*)s;
+    ptr->next = NULL;
+    ptr->type = 0;
+    if( strlen(str) < 3 )
+    {
+        ptr->data = malloc(sizeof(char));
+        ((char*)ptr->data)[0] = '\0';
+    }
+    else
+    {
+        str+=2;
+        ptr->data = malloc(sizeof(char)*strlen(str)+1);
+        memcpy(ptr->data,str,strlen(str)+1);
+    }
+    return true;
+}
+
+bool ev_cb_save_0_msgbox(pEvent ptr,void *s)
+{
+    FILE *f = (FILE*)s;
+    fprintf(f,"0 %s",ptr->data);
+    return true;
+}
+bool ev_cb_run_0_msgbox(pEvent ptr,pMapfile mf,int ri,int rj)
+{
+    MSGBOX((char*)ptr->data);
+    return true;
+}
+
+/******************/
 char *_STR(char * str){
     size_t len = strlen(str);
     if( len > 0 ){
@@ -100,6 +115,7 @@ void map_intro()
 {
     EV_CB_LOAD[0] = ev_cb_load_0_msgbox;
     EV_CB_SAVE[0] = ev_cb_save_0_msgbox;
+    EV_CB_RUN [0] = ev_cb_run_0_msgbox;
 }
 bool resize_map(pMapfile mf,int nH,int nW)
 {
@@ -170,6 +186,7 @@ bool read_map(pMapfile ptr,const char *filename){
                     LOG("Function Hook Missing! EV_CB_LOAD %d",eid);
                     return false;
                 }
+                tmp=tmp->next;
             }
         }
     }

@@ -207,8 +207,10 @@ bool ui_mapeditor(pMapfile mf)
         putString(9,34,buf,15,0);
         sprintf(buf,"屬性: %d",type);
         putString(9,35,buf,15,0);
+        sprintf(buf,"屬性: %d",eventid);
+        putString(9,36,buf,15,0);
         
-        putString(0,37,"O:筆刷 P:屬性",15,0);
+        putString(0,37,"O:筆刷 P:屬性 E:事件",15,0);
         //nowpos
         putASCII2(ta*6,tb*3,'@',12,12);
         putASCII2(ta*6+1,tb*3,'@',12,12);        
@@ -265,10 +267,7 @@ bool ui_mapeditor(pMapfile mf)
             case VK_E:
                 GetInputVBS("事件ID (-1設定為空)",buf,256);
                 sscanf(buf,"%d",&ta);
-                if( ta == -1 )
-                {
-                    
-                }
+                eventid = ta;
                 break;
             case VK_SPACE:
                 if( drawerid != DMODE_NONE )
@@ -357,15 +356,17 @@ bool ui_mapplay(bool tmp){
         show_image(img_player,lx*6,ly*3);
         drawCmdWindow();
         //do event
+        
         if( changed )
         {
-            int eid = mfb[uPosY*mf.W+tPosX].eventid;
+            //Sleep(5000);
+            int eid = mfb[uPosY*mf.W+uPosX].eventid;
             if( eid != -1 )
             {
                 pEvent e = mf.event[eid].next;
                 while( e!= NULL )
                 {
-                    runEvent(e);
+                    runEvent(e,&mf,uPosY,uPosX);
                     e = e->next;
                 }               
             }
