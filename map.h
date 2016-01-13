@@ -48,7 +48,7 @@ typedef struct{
 }Mapfile,*pMapfile;
 
 typedef bool (*callback)(pEvent,void*);
-typedef bool (*runcallback)(pEvent,pMapfile,int,int);
+typedef bool (*runcallback)(pEvent,pMapfile,int*,int*);
 
 
 #define FUNC_NUM 10
@@ -56,7 +56,7 @@ callback EV_CB_LOAD[FUNC_NUM];
 callback EV_CB_SAVE[FUNC_NUM];
 runcallback EV_CB_RUN[FUNC_NUM];
 
-bool runEvent(pEvent p,pMapfile mf,int ri,int rj)
+bool runEvent(pEvent p,pMapfile mf,int *ri,int *rj)
 {
     //MSGBOX("run event!");
     if( EV_CB_RUN[p->type] == NULL )
@@ -65,7 +65,8 @@ bool runEvent(pEvent p,pMapfile mf,int ri,int rj)
     }
     else
     {
-        EV_CB_RUN[p->type](p,mf,ri,rj);
+        if(!EV_CB_RUN[p->type](p,mf,ri,rj))
+            return false;
     }
     return true;
 }
@@ -95,9 +96,36 @@ bool ev_cb_save_0_msgbox(pEvent ptr,void *s)
     fprintf(f,"0 %s",ptr->data);
     return true;
 }
-bool ev_cb_run_0_msgbox(pEvent ptr,pMapfile mf,int ri,int rj)
+bool ev_cb_run_0_msgbox(pEvent ptr,pMapfile mf,int *ri,int *rj)
 {
     MSGBOX((char*)ptr->data);
+    return true;
+}
+
+bool ev_cb_load_1_loadmap(pEvent ptr,void *s)
+{
+    //MSGBOX((char*)s);
+    char *str = (char*)s;
+    ptr->next = NULL;
+    ptr->type = 1;
+    if( strlen(str) < 3 )
+    {
+        ptr->data = malloc(sizeof(char));
+        ((char*)ptr->data)[0] = '\0';
+    }
+    else
+    {
+        str+=2;
+        ptr->data = malloc(sizeof(char)*strlen(str)+1);
+        memcpy(ptr->data,str,strlen(str)+1);
+    }
+    return true;
+}
+
+bool ev_cb_save_1_loadmap(pEvent ptr,void *s)
+{
+    FILE *f = (FILE*)s;
+    fprintf(f,"1 %s",ptr->data);
     return true;
 }
 
@@ -111,12 +139,7 @@ char *_STR(char * str){
     }
     return str;
 }
-void map_intro()
-{
-    EV_CB_LOAD[0] = ev_cb_load_0_msgbox;
-    EV_CB_SAVE[0] = ev_cb_save_0_msgbox;
-    EV_CB_RUN [0] = ev_cb_run_0_msgbox;
-}
+
 bool resize_map(pMapfile mf,int nH,int nW)
 {
     pBlock newmap = (pBlock)malloc(sizeof(Block)*nW*nH);
@@ -237,5 +260,19 @@ bool save_map(pMapfile ptr,const char *filename){
     }
     fclose(fp);
     return true;
+}
+bool ev_cb_run_1_loadmap(pEvent ptr,pMapfile mf,int *ri,int *rj)
+{
+    MSGBOX("A");
+    return false;
+}
+void map_intro()
+{
+    EV_CB_LOAD[0] = ev_cb_load_0_msgbox;
+    EV_CB_SAVE[0] = ev_cb_save_0_msgbox;
+    EV_CB_RUN [0] = ev_cb_run_0_msgbox;
+    EV_CB_LOAD[1] = ev_cb_load_1_loadmap;
+    EV_CB_SAVE[1] = ev_cb_save_1_loadmap;
+    EV_CB_RUN [1] = ev_cb_run_1_loadmap;
 }
 #endif

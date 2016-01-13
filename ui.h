@@ -366,7 +366,8 @@ bool ui_mapplay(bool tmp){
                 pEvent e = mf.event[eid].next;
                 while( e!= NULL )
                 {
-                    runEvent(e,&mf,uPosY,uPosX);
+                    if(!runEvent(e,&mf,&uPosY,&uPosX))
+                        break;
                     e = e->next;
                 }               
             }
